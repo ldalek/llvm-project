@@ -143,7 +143,7 @@ public:
   ///
   /// FIXME: Make non-optional using a virtual file as needed, remove \c
   /// Filename and use \c OrigEntry.getNameAsRequested() instead.
-  OptionalFileEntryRefDegradesToFileEntryPtr OrigEntry;
+  OptionalFileEntryRef OrigEntry;
 
   /// References the file which the contents were actually loaded from.
   ///
@@ -1064,9 +1064,8 @@ public:
 
   /// Returns the FileEntry record for the provided FileID.
   const FileEntry *getFileEntryForID(FileID FID) const {
-    if (auto *Entry = getSLocEntryForFile(FID))
-      return Entry->getFile().getContentCache().OrigEntry;
-    return nullptr;
+    auto FE = getFileEntryRefForID(FID);
+    return FE ? *FE : nullptr;
   }
 
   /// Returns the FileEntryRef for the provided FileID.
@@ -1083,9 +1082,11 @@ public:
   std::optional<StringRef> getNonBuiltinFilenameForID(FileID FID) const;
 
   /// Returns the FileEntry record for the provided SLocEntry.
-  const FileEntry *getFileEntryForSLocEntry(const SrcMgr::SLocEntry &sloc) const
-  {
-    return sloc.getFile().getContentCache().OrigEntry;
+  const FileEntry *
+  getFileEntryForSLocEntry(const SrcMgr::SLocEntry &SLocEntry) const {
+    if (auto FileEntry = SLocEntry.getFile().getContentCache().OrigEntry)
+      return *FileEntry;
+    return nullptr;
   }
 
   /// Return a StringRef to the source buffer data for the

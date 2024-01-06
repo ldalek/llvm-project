@@ -180,17 +180,19 @@ void MsanThreadLocalMallocStorage::CommitBack() {
 
 static void *MsanAllocate(StackTrace *stack, uptr size, uptr alignment,
                           bool zeroise) {
-  if (size > max_malloc_size) {
+  if (UNLIKELY(size > max_malloc_size)) {
     if (AllocatorMayReturnNull()) {
       Report("WARNING: MemorySanitizer failed to allocate 0x%zx bytes\n", size);
       return nullptr;
     }
-    ReportAllocationSizeTooBig(size, max_malloc_size, stack);
+    GET_FATAL_STACK_TRACE;
+    ReportAllocationSizeTooBig(size, max_malloc_size, &stack);
   }
   if (UNLIKELY(IsRssLimitExceeded())) {
     if (AllocatorMayReturnNull())
       return nullptr;
-    ReportRssLimitExceeded(stack);
+    GET_FATAL_STACK_TRACE;
+    ReportRssLimitExceeded(&stack);
   }
   MsanThread *t = GetCurrentThread();
   void *allocated;
@@ -206,7 +208,8 @@ static void *MsanAllocate(StackTrace *stack, uptr size, uptr alignment,
     SetAllocatorOutOfMemory();
     if (AllocatorMayReturnNull())
       return nullptr;
-    ReportOutOfMemory(size, stack);
+    GET_FATAL_STACK_TRACE;
+    ReportOutOfMemory(size, &stack);
   }
   Metadata *meta =
       reinterpret_cast<Metadata *>(allocator.GetMetaData(allocated));
@@ -288,7 +291,8 @@ static void *MsanCalloc(StackTrace *stack, uptr nmemb, uptr size) {
   if (UNLIKELY(CheckForCallocOverflow(size, nmemb))) {
     if (AllocatorMayReturnNull())
       return nullptr;
-    ReportCallocOverflow(nmemb, size, stack);
+    GET_FATAL_STACK_TRACE;
+    ReportCallocOverflow(nmemb, size, &stack);
   }
   return MsanAllocate(stack, nmemb * size, sizeof(u64), true);
 }
@@ -343,7 +347,8 @@ void *msan_reallocarray(void *ptr, uptr nmemb, uptr size, StackTrace *stack) {
     errno = errno_ENOMEM;
     if (AllocatorMayReturnNull())
       return nullptr;
-    ReportReallocArrayOverflow(nmemb, size, stack);
+    GET_FATAL_STACK_TRACE;
+    ReportReallocArrayOverflow(nmemb, size, &stack);
   }
   return msan_realloc(ptr, nmemb * size, stack);
 }
@@ -358,7 +363,8 @@ void *msan_pvalloc(uptr size, StackTrace *stack) {
     errno = errno_ENOMEM;
     if (AllocatorMayReturnNull())
       return nullptr;
-    ReportPvallocOverflow(size, stack);
+    GET_FATAL_STACK_TRACE;
+    ReportPvallocOverflow(size, &stack);
   }
   // pvalloc(0) should allocate one page.
   size = size ? RoundUpTo(size, PageSize) : PageSize;
@@ -370,7 +376,8 @@ void *msan_aligned_alloc(uptr alignment, uptr size, StackTrace *stack) {
     errno = errno_EINVAL;
     if (AllocatorMayReturnNull())
       return nullptr;
-    ReportInvalidAlignedAllocAlignment(size, alignment, stack);
+    GET_FATAL_STACK_TRACE;
+    ReportInvalidAlignedAllocAlignment(size, alignment, &stack);
   }
   return SetErrnoOnNull(MsanAllocate(stack, size, alignment, false));
 }
@@ -380,7 +387,8 @@ void *msan_memalign(uptr alignment, uptr size, StackTrace *stack) {
     errno = errno_EINVAL;
     if (AllocatorMayReturnNull())
       return nullptr;
-    ReportInvalidAllocationAlignment(alignment, stack);
+    GET_FATAL_STACK_TRACE;
+    ReportInvalidAllocationAlignment(alignment, &stack);
   }
   return SetErrnoOnNull(MsanAllocate(stack, size, alignment, false));
 }
@@ -390,7 +398,8 @@ int msan_posix_memalign(void **memptr, uptr alignment, uptr size,
   if (UNLIKELY(!CheckPosixMemalignAlignment(alignment))) {
     if (AllocatorMayReturnNull())
       return errno_EINVAL;
-    ReportInvalidPosixMemalignAlignment(alignment, stack);
+    GET_FATAL_STACK_TRACE;
+    ReportInvalidPosixMemalignAlignment(alignment, &stack);
   }
   void *ptr = MsanAllocate(stack, size, alignment, false);
   if (UNLIKELY(!ptr))

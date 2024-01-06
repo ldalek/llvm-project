@@ -321,6 +321,9 @@ const int STACK_TRACE_TAG_VPTR = STACK_TRACE_TAG_FIELDS + 1;
     stack.Unwind(pc, bp, nullptr, common_flags()->fast_unwind_on_fatal); \
   }
 
+#define GET_FATAL_STACK_TRACE \
+  GET_FATAL_STACK_TRACE_PC_BP(StackTrace::GetCurrentPc(), GET_CURRENT_FRAME())
+
 class ScopedThreadLocalStateBackup {
  public:
   ScopedThreadLocalStateBackup() { Backup(); }

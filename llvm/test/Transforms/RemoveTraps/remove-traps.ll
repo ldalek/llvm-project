@@ -7,12 +7,14 @@
 target triple = "x86_64-pc-linux-gnu"
 
 declare void @llvm.ubsantrap(i8 immarg)
+declare i1 @llvm.allow.ubsan.check(i8 immarg)
 
 define dso_local noundef i32 @simple(ptr noundef readonly %0) {
 ; NOPROFILE-LABEL: define dso_local noundef i32 @simple(
 ; NOPROFILE-SAME: ptr noundef readonly [[TMP0:%.*]]) {
 ; NOPROFILE-NEXT:    [[TMP2:%.*]] = icmp eq ptr [[TMP0]], null
-; NOPROFILE-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], false
+; NOPROFILE-NEXT:    [[HOT:%.*]] = xor i1 true, true
+; NOPROFILE-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], [[HOT]]
 ; NOPROFILE-NEXT:    br i1 [[TMP6]], label [[TMP3:%.*]], label [[TMP4:%.*]]
 ; NOPROFILE:       3:
 ; NOPROFILE-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -24,7 +26,8 @@ define dso_local noundef i32 @simple(ptr noundef readonly %0) {
 ; ALL-LABEL: define dso_local noundef i32 @simple(
 ; ALL-SAME: ptr noundef readonly [[TMP0:%.*]]) {
 ; ALL-NEXT:    [[TMP2:%.*]] = icmp eq ptr [[TMP0]], null
-; ALL-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], true
+; ALL-NEXT:    [[HOT:%.*]] = xor i1 false, true
+; ALL-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], [[HOT]]
 ; ALL-NEXT:    br i1 [[TMP6]], label [[TMP3:%.*]], label [[TMP4:%.*]]
 ; ALL:       3:
 ; ALL-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -36,7 +39,8 @@ define dso_local noundef i32 @simple(ptr noundef readonly %0) {
 ; HOT-LABEL: define dso_local noundef i32 @simple(
 ; HOT-SAME: ptr noundef readonly [[TMP0:%.*]]) {
 ; HOT-NEXT:    [[TMP2:%.*]] = icmp eq ptr [[TMP0]], null
-; HOT-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], false
+; HOT-NEXT:    [[HOT:%.*]] = xor i1 true, true
+; HOT-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], [[HOT]]
 ; HOT-NEXT:    br i1 [[TMP6]], label [[TMP3:%.*]], label [[TMP4:%.*]]
 ; HOT:       3:
 ; HOT-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -48,7 +52,8 @@ define dso_local noundef i32 @simple(ptr noundef readonly %0) {
 ; HOT70-LABEL: define dso_local noundef i32 @simple(
 ; HOT70-SAME: ptr noundef readonly [[TMP0:%.*]]) {
 ; HOT70-NEXT:    [[TMP2:%.*]] = icmp eq ptr [[TMP0]], null
-; HOT70-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], false
+; HOT70-NEXT:    [[HOT:%.*]] = xor i1 true, true
+; HOT70-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], [[HOT]]
 ; HOT70-NEXT:    br i1 [[TMP6]], label [[TMP3:%.*]], label [[TMP4:%.*]]
 ; HOT70:       3:
 ; HOT70-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -58,7 +63,8 @@ define dso_local noundef i32 @simple(ptr noundef readonly %0) {
 ; HOT70-NEXT:    ret i32 [[TMP5]]
 ;
   %chk = icmp eq ptr %0, null
-  %hot = call i1 @llvm.experimental.hot()
+  %allow = call i1 @llvm.allow.ubsan.check(i8 22)
+  %hot = xor i1 %allow, true
   %2 = or i1 %chk, %hot
   br i1 %2, label %3, label %4
 
@@ -76,7 +82,8 @@ define dso_local noundef i32 @hot(ptr noundef readonly %0) !prof !36 {
 ; NOPROFILE-LABEL: define dso_local noundef i32 @hot(
 ; NOPROFILE-SAME: ptr noundef readonly [[TMP0:%.*]]) !prof [[PROF16:![0-9]+]] {
 ; NOPROFILE-NEXT:    [[TMP2:%.*]] = icmp eq ptr [[TMP0]], null
-; NOPROFILE-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], false
+; NOPROFILE-NEXT:    [[HOT:%.*]] = xor i1 true, true
+; NOPROFILE-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], [[HOT]]
 ; NOPROFILE-NEXT:    br i1 [[TMP6]], label [[TMP3:%.*]], label [[TMP4:%.*]]
 ; NOPROFILE:       3:
 ; NOPROFILE-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -88,7 +95,8 @@ define dso_local noundef i32 @hot(ptr noundef readonly %0) !prof !36 {
 ; ALL-LABEL: define dso_local noundef i32 @hot(
 ; ALL-SAME: ptr noundef readonly [[TMP0:%.*]]) !prof [[PROF16:![0-9]+]] {
 ; ALL-NEXT:    [[TMP2:%.*]] = icmp eq ptr [[TMP0]], null
-; ALL-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], true
+; ALL-NEXT:    [[HOT:%.*]] = xor i1 false, true
+; ALL-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], [[HOT]]
 ; ALL-NEXT:    br i1 [[TMP6]], label [[TMP3:%.*]], label [[TMP4:%.*]]
 ; ALL:       3:
 ; ALL-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -100,7 +108,8 @@ define dso_local noundef i32 @hot(ptr noundef readonly %0) !prof !36 {
 ; HOT-LABEL: define dso_local noundef i32 @hot(
 ; HOT-SAME: ptr noundef readonly [[TMP0:%.*]]) !prof [[PROF16:![0-9]+]] {
 ; HOT-NEXT:    [[TMP2:%.*]] = icmp eq ptr [[TMP0]], null
-; HOT-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], true
+; HOT-NEXT:    [[HOT:%.*]] = xor i1 false, true
+; HOT-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], [[HOT]]
 ; HOT-NEXT:    br i1 [[TMP6]], label [[TMP3:%.*]], label [[TMP4:%.*]]
 ; HOT:       3:
 ; HOT-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -112,7 +121,8 @@ define dso_local noundef i32 @hot(ptr noundef readonly %0) !prof !36 {
 ; HOT70-LABEL: define dso_local noundef i32 @hot(
 ; HOT70-SAME: ptr noundef readonly [[TMP0:%.*]]) !prof [[PROF16:![0-9]+]] {
 ; HOT70-NEXT:    [[TMP2:%.*]] = icmp eq ptr [[TMP0]], null
-; HOT70-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], false
+; HOT70-NEXT:    [[HOT:%.*]] = xor i1 true, true
+; HOT70-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], [[HOT]]
 ; HOT70-NEXT:    br i1 [[TMP6]], label [[TMP3:%.*]], label [[TMP4:%.*]]
 ; HOT70:       3:
 ; HOT70-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -122,7 +132,8 @@ define dso_local noundef i32 @hot(ptr noundef readonly %0) !prof !36 {
 ; HOT70-NEXT:    ret i32 [[TMP5]]
 ;
   %chk = icmp eq ptr %0, null
-  %hot = call i1 @llvm.experimental.hot()
+  %allow = call i1 @llvm.allow.ubsan.check(i8 22)
+  %hot = xor i1 %allow, true
   %2 = or i1 %chk, %hot
   br i1 %2, label %3, label %4
 
@@ -139,7 +150,8 @@ define dso_local noundef i32 @veryHot(ptr noundef readonly %0) !prof !39 {
 ; NOPROFILE-LABEL: define dso_local noundef i32 @veryHot(
 ; NOPROFILE-SAME: ptr noundef readonly [[TMP0:%.*]]) !prof [[PROF17:![0-9]+]] {
 ; NOPROFILE-NEXT:    [[TMP2:%.*]] = icmp eq ptr [[TMP0]], null
-; NOPROFILE-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], false
+; NOPROFILE-NEXT:    [[HOT:%.*]] = xor i1 true, true
+; NOPROFILE-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], [[HOT]]
 ; NOPROFILE-NEXT:    br i1 [[TMP6]], label [[TMP3:%.*]], label [[TMP4:%.*]]
 ; NOPROFILE:       3:
 ; NOPROFILE-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -151,7 +163,8 @@ define dso_local noundef i32 @veryHot(ptr noundef readonly %0) !prof !39 {
 ; ALL-LABEL: define dso_local noundef i32 @veryHot(
 ; ALL-SAME: ptr noundef readonly [[TMP0:%.*]]) !prof [[PROF17:![0-9]+]] {
 ; ALL-NEXT:    [[TMP2:%.*]] = icmp eq ptr [[TMP0]], null
-; ALL-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], true
+; ALL-NEXT:    [[HOT:%.*]] = xor i1 false, true
+; ALL-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], [[HOT]]
 ; ALL-NEXT:    br i1 [[TMP6]], label [[TMP3:%.*]], label [[TMP4:%.*]]
 ; ALL:       3:
 ; ALL-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -163,7 +176,8 @@ define dso_local noundef i32 @veryHot(ptr noundef readonly %0) !prof !39 {
 ; HOT-LABEL: define dso_local noundef i32 @veryHot(
 ; HOT-SAME: ptr noundef readonly [[TMP0:%.*]]) !prof [[PROF17:![0-9]+]] {
 ; HOT-NEXT:    [[TMP2:%.*]] = icmp eq ptr [[TMP0]], null
-; HOT-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], true
+; HOT-NEXT:    [[HOT:%.*]] = xor i1 false, true
+; HOT-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], [[HOT]]
 ; HOT-NEXT:    br i1 [[TMP6]], label [[TMP3:%.*]], label [[TMP4:%.*]]
 ; HOT:       3:
 ; HOT-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -175,7 +189,8 @@ define dso_local noundef i32 @veryHot(ptr noundef readonly %0) !prof !39 {
 ; HOT70-LABEL: define dso_local noundef i32 @veryHot(
 ; HOT70-SAME: ptr noundef readonly [[TMP0:%.*]]) !prof [[PROF17:![0-9]+]] {
 ; HOT70-NEXT:    [[TMP2:%.*]] = icmp eq ptr [[TMP0]], null
-; HOT70-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], true
+; HOT70-NEXT:    [[HOT:%.*]] = xor i1 false, true
+; HOT70-NEXT:    [[TMP6:%.*]] = or i1 [[TMP2]], [[HOT]]
 ; HOT70-NEXT:    br i1 [[TMP6]], label [[TMP3:%.*]], label [[TMP4:%.*]]
 ; HOT70:       3:
 ; HOT70-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -185,7 +200,8 @@ define dso_local noundef i32 @veryHot(ptr noundef readonly %0) !prof !39 {
 ; HOT70-NEXT:    ret i32 [[TMP5]]
 ;
   %chk = icmp eq ptr %0, null
-  %hot = call i1 @llvm.experimental.hot()
+  %allow = call i1 @llvm.allow.ubsan.check(i8 22)
+  %hot = xor i1 %allow, true
   %2 = or i1 %chk, %hot
   br i1 %2, label %3, label %4
 
@@ -206,7 +222,8 @@ define dso_local noundef i32 @branchColdFnHot(i32 noundef %0, ptr noundef readon
 ; NOPROFILE-NEXT:    br i1 [[TMP3]], label [[TMP9:%.*]], label [[TMP4:%.*]], !prof [[PROF18:![0-9]+]]
 ; NOPROFILE:       4:
 ; NOPROFILE-NEXT:    [[TMP5:%.*]] = icmp eq ptr [[TMP1]], null
-; NOPROFILE-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], false
+; NOPROFILE-NEXT:    [[HOT:%.*]] = xor i1 true, true
+; NOPROFILE-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], [[HOT]]
 ; NOPROFILE-NEXT:    br i1 [[TMP11]], label [[TMP6:%.*]], label [[TMP7:%.*]]
 ; NOPROFILE:       6:
 ; NOPROFILE-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -224,7 +241,8 @@ define dso_local noundef i32 @branchColdFnHot(i32 noundef %0, ptr noundef readon
 ; ALL-NEXT:    br i1 [[TMP3]], label [[TMP9:%.*]], label [[TMP4:%.*]], !prof [[PROF18:![0-9]+]]
 ; ALL:       4:
 ; ALL-NEXT:    [[TMP5:%.*]] = icmp eq ptr [[TMP1]], null
-; ALL-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], true
+; ALL-NEXT:    [[HOT:%.*]] = xor i1 false, true
+; ALL-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], [[HOT]]
 ; ALL-NEXT:    br i1 [[TMP11]], label [[TMP6:%.*]], label [[TMP7:%.*]]
 ; ALL:       6:
 ; ALL-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -242,7 +260,8 @@ define dso_local noundef i32 @branchColdFnHot(i32 noundef %0, ptr noundef readon
 ; HOT-NEXT:    br i1 [[TMP3]], label [[TMP9:%.*]], label [[TMP4:%.*]], !prof [[PROF18:![0-9]+]]
 ; HOT:       4:
 ; HOT-NEXT:    [[TMP5:%.*]] = icmp eq ptr [[TMP1]], null
-; HOT-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], false
+; HOT-NEXT:    [[HOT:%.*]] = xor i1 true, true
+; HOT-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], [[HOT]]
 ; HOT-NEXT:    br i1 [[TMP11]], label [[TMP6:%.*]], label [[TMP7:%.*]]
 ; HOT:       6:
 ; HOT-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -260,7 +279,8 @@ define dso_local noundef i32 @branchColdFnHot(i32 noundef %0, ptr noundef readon
 ; HOT70-NEXT:    br i1 [[TMP3]], label [[TMP9:%.*]], label [[TMP4:%.*]], !prof [[PROF18:![0-9]+]]
 ; HOT70:       4:
 ; HOT70-NEXT:    [[TMP5:%.*]] = icmp eq ptr [[TMP1]], null
-; HOT70-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], false
+; HOT70-NEXT:    [[HOT:%.*]] = xor i1 true, true
+; HOT70-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], [[HOT]]
 ; HOT70-NEXT:    br i1 [[TMP11]], label [[TMP6:%.*]], label [[TMP7:%.*]]
 ; HOT70:       6:
 ; HOT70-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -277,7 +297,8 @@ define dso_local noundef i32 @branchColdFnHot(i32 noundef %0, ptr noundef readon
 
 4:
   %chk = icmp eq ptr %1, null
-  %hot = call i1 @llvm.experimental.hot()
+  %allow = call i1 @llvm.allow.ubsan.check(i8 22)
+  %hot = xor i1 %allow, true
   %5 = or i1 %chk, %hot
   br i1 %5, label %6, label %7
 
@@ -301,7 +322,8 @@ define dso_local noundef i32 @branchHotFnCold(i32 noundef %0, ptr noundef readon
 ; NOPROFILE-NEXT:    br i1 [[TMP3]], label [[TMP9:%.*]], label [[TMP4:%.*]], !prof [[PROF19:![0-9]+]]
 ; NOPROFILE:       4:
 ; NOPROFILE-NEXT:    [[TMP5:%.*]] = icmp eq ptr [[TMP1]], null
-; NOPROFILE-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], false
+; NOPROFILE-NEXT:    [[HOT:%.*]] = xor i1 true, true
+; NOPROFILE-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], [[HOT]]
 ; NOPROFILE-NEXT:    br i1 [[TMP11]], label [[TMP6:%.*]], label [[TMP7:%.*]]
 ; NOPROFILE:       6:
 ; NOPROFILE-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -319,7 +341,8 @@ define dso_local noundef i32 @branchHotFnCold(i32 noundef %0, ptr noundef readon
 ; ALL-NEXT:    br i1 [[TMP3]], label [[TMP9:%.*]], label [[TMP4:%.*]], !prof [[PROF19:![0-9]+]]
 ; ALL:       4:
 ; ALL-NEXT:    [[TMP5:%.*]] = icmp eq ptr [[TMP1]], null
-; ALL-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], true
+; ALL-NEXT:    [[HOT:%.*]] = xor i1 false, true
+; ALL-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], [[HOT]]
 ; ALL-NEXT:    br i1 [[TMP11]], label [[TMP6:%.*]], label [[TMP7:%.*]]
 ; ALL:       6:
 ; ALL-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -337,7 +360,8 @@ define dso_local noundef i32 @branchHotFnCold(i32 noundef %0, ptr noundef readon
 ; HOT-NEXT:    br i1 [[TMP3]], label [[TMP9:%.*]], label [[TMP4:%.*]], !prof [[PROF19:![0-9]+]]
 ; HOT:       4:
 ; HOT-NEXT:    [[TMP5:%.*]] = icmp eq ptr [[TMP1]], null
-; HOT-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], true
+; HOT-NEXT:    [[HOT:%.*]] = xor i1 false, true
+; HOT-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], [[HOT]]
 ; HOT-NEXT:    br i1 [[TMP11]], label [[TMP6:%.*]], label [[TMP7:%.*]]
 ; HOT:       6:
 ; HOT-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -355,7 +379,8 @@ define dso_local noundef i32 @branchHotFnCold(i32 noundef %0, ptr noundef readon
 ; HOT70-NEXT:    br i1 [[TMP3]], label [[TMP9:%.*]], label [[TMP4:%.*]], !prof [[PROF19:![0-9]+]]
 ; HOT70:       4:
 ; HOT70-NEXT:    [[TMP5:%.*]] = icmp eq ptr [[TMP1]], null
-; HOT70-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], false
+; HOT70-NEXT:    [[HOT:%.*]] = xor i1 true, true
+; HOT70-NEXT:    [[TMP11:%.*]] = or i1 [[TMP5]], [[HOT]]
 ; HOT70-NEXT:    br i1 [[TMP11]], label [[TMP6:%.*]], label [[TMP7:%.*]]
 ; HOT70:       6:
 ; HOT70-NEXT:    tail call void @llvm.ubsantrap(i8 22)
@@ -372,7 +397,8 @@ define dso_local noundef i32 @branchHotFnCold(i32 noundef %0, ptr noundef readon
 
 4:
   %chk = icmp eq ptr %1, null
-  %hot = call i1 @llvm.experimental.hot()
+  %allow = call i1 @llvm.allow.ubsan.check(i8 22)
+  %hot = xor i1 %allow, true
   %5 = or i1 %chk, %hot
   br i1 %5, label %6, label %7
 

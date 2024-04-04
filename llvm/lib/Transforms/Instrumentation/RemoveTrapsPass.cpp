@@ -38,7 +38,7 @@ STATISTIC(NumChecksRemoved, "Number of removed checks");
 
 static bool removeUbsanTraps(Function &F, const BlockFrequencyInfo &BFI,
                              const ProfileSummaryInfo *PSI) {
-  SmallVector<std::pair<IntrinsicInst *, Value *>, 16> ReplaceWithValue;
+  SmallVector<std::pair<IntrinsicInst *, bool>, 16> ReplaceWithValue;
   std::unique_ptr<RandomNumberGenerator> Rng;
 
   auto ShouldRemove = [&](bool IsHot) {
@@ -74,8 +74,7 @@ static bool removeUbsanTraps(Function &F, const BlockFrequencyInfo &BFI,
         bool ToRemove = ShouldRemove(IsHot);
         ReplaceWithValue.push_back({
             II,
-            ToRemove ? Constant::getNullValue(II->getType())
-                     : (Constant::getAllOnesValue(II->getType())),
+            ToRemove,
         });
         if (ToRemove)
           ++NumChecksRemoved;
@@ -88,7 +87,7 @@ static bool removeUbsanTraps(Function &F, const BlockFrequencyInfo &BFI,
   }
 
   for (auto [I, V] : ReplaceWithValue) {
-    I->replaceAllUsesWith(V);
+    I->replaceAllUsesWith(ConstantInt::getBool(I->getType(), !V));
     I->eraseFromParent();
   }
 

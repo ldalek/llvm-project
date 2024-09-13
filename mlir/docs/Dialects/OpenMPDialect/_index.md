@@ -64,10 +64,10 @@ OpenMP clause definitions are located in
 [OpenMPClauses.td](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/Dialect/OpenMP/OpenMPClauses.td).
 For each clause, an `OpenMP_Clause` subclass and a definition based on it must
 be created. The subclass must take a `bit` template argument for each of the
-properties it may define, listed below, which is forwarded to the base class.
-The definition must be an instantiation of the base class where all these
-template arguments are set to `false`. The definition's name must be
-`OpenMP_<Name>Clause`, whereas its base class' must be
+properties it can populate on associated `OpenMP_Op`s. These must be forwarded
+to the base class. The definition must be an instantiation of the base class
+where all these template arguments are set to `false`. The definition's name
+must be `OpenMP_<Name>Clause`, whereas its base class' must be
 `OpenMP_<Name>ClauseSkip`. Following this pattern makes it possible to
 optionally skip the inheritance of some properties when defining operations:
 [more info](#overriding-clause-inherited-properties).
@@ -79,11 +79,10 @@ implies some op trait, like the `map` clause and the `MapClauseOwningInterface`.
 used to represent the clause. Argument names use snake_case and should contain
 the clause name to avoid name clashes between clauses. Variadic arguments
 (non-attributes) must contain the "_vars" suffix.
-  - `string assemblyFormat`: Optional formatting string to produce custom
-human-friendly printers and parsers for arguments associated with the clause.
-It will be combined with assembly formats for other clauses depending on the
-`isRequired` template argument passed to the parent `OpenMP_Clause` class, as
-explained [below](#adding-an-operation). 
+  - `string {req,opt}AssemblyFormat`: Optional formatting strings to produce
+custom human-friendly printers and parsers for arguments associated with the
+clause. It will be combined with assembly formats for other clauses as explained
+[below](#adding-an-operation).
   - `string description`: Optional description text to describe the clause and
 its representation.
   - `string extraClassDeclaration`: Optional C++ declarations to be added to
@@ -95,13 +94,13 @@ For example:
 class OpenMP_ExampleClauseSkip<
     bit traits = false, bit arguments = false, bit assemblyFormat = false,
     bit description = false, bit extraClassDeclaration = false
-  > : OpenMP_Clause</*isRequired=*/false, traits, arguments, assemblyFormat,
-                    description, extraClassDeclaration> {
+  > : OpenMP_Clause<traits, arguments, assemblyFormat, description,
+                    extraClassDeclaration> {
   let arguments = (ins
     Optional<AnyType>:$example_var
   );
 
-  let assemblyFormat = [{
+  let optAssemblyFormat = [{
     `example` `(` $example_var `:` type($example_var) `)`
   }];
 
@@ -156,9 +155,13 @@ def ExampleOp : OpenMP_Op<"example", traits = [
 This is possible because the `arguments`, `assemblyFormat` and
 `extraClassDeclaration` properties of the operation are by default
 populated by concatenating the corresponding properties of the clauses on the
-list. In the case of the `assemblyFormat`, this also involves splitting the
-format strings for required clauses from the ones for optional clauses. The
-latter are wrapped in an `oilist()` and interleaved with "|" instead of spaces.
+list. In the case of the `assemblyFormat`, this involves combining the
+`reqAssemblyFormat` and the `optAssemblyFormat` properties. The
+`reqAssemblyFormat` of all clauses is concatenated first and separated using
+spaces, whereas the `optAssemblyFormat` is wrapped in an `oilist()` and
+interleaved with "|" instead of spaces. The resulting `assemblyFormat` contains
+the required assembly format strings, followed by the optional assembly format
+strings, optionally the `$region` and the `attr-dict`.
 
 ### Overriding Clause-Inherited Properties
 
@@ -178,7 +181,8 @@ a clause-populated operation property. Instead of overriding the property in the
 definition of the operation and having to manually replicate what would
 otherwise be automatically populated before adding to it, some internal
 properties are defined to hold this default value: `clausesArgs`,
-`clausesAssemblyFormat` and `clausesExtraClassDeclaration`.
+`clausesAssemblyFormat`, `clauses{Req,Opt}AssemblyFormat` and
+`clausesExtraClassDeclaration`.
 
 In the following example, assuming both the `OpenMP_InReductionClause` and the
 `OpenMP_ReductionClause` define a `getReductionVars` extra class declaration,

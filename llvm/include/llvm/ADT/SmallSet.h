@@ -16,14 +16,10 @@
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/iterator.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/Support/type_traits.h"
 #include <cstddef>
 #include <functional>
 #include <set>
-#include <type_traits>
 #include <utility>
 
 namespace llvm {
@@ -180,10 +176,9 @@ public:
   bool erase(const T &V) {
     if (!isSmall())
       return Set.erase(V);
-
-    auto It = llvm::find(Vector, V);
-    if (It != Vector.end()) {
-      Vector.erase(It);
+    auto I = std::find(Vector.begin(), Vector.end(), V);
+    if (I != Vector.end()) {
+      Vector.erase(I);
       return true;
     }
     return false;
@@ -209,8 +204,8 @@ public:
   /// Check if the SmallSet contains the given element.
   bool contains(const T &V) const {
     if (isSmall())
-      return llvm::is_contained(Vector, V);
-    return llvm::is_contained(Set, V);
+      return std::find(Vector.begin(), Vector.end(), V) != Vector.end();
+    return Set.find(V) != Set.end();
   }
 
 private:
@@ -225,8 +220,8 @@ private:
       return {const_iterator(I), Inserted};
     }
 
-    if (auto I = llvm::find(Vector, V);
-        I != Vector.end()) // Don't reinsert if it already exists.
+    auto I = std::find(Vector.begin(), Vector.end(), V);
+    if (I != Vector.end()) // Don't reinsert if it already exists.
       return {const_iterator(I), false};
     if (Vector.size() < N) {
       Vector.push_back(std::forward<ArgType>(V));

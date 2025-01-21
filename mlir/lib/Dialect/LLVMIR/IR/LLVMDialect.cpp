@@ -1344,7 +1344,8 @@ void CallOp::print(OpAsmPrinter &p) {
 
   // Reconstruct the function MLIR function type from operand and result types.
   call_interface_impl::printFunctionSignature(
-      p, *this, args.getTypes(), /*isVariadic=*/false, getResultTypes());
+      p, args.getTypes(), getArgAttrsAttr(),
+      /*isVariadic=*/false, getResultTypes(), getResAttrsAttr());
 }
 
 /// Parses the type of a call operation and resolves the operands if the parsing

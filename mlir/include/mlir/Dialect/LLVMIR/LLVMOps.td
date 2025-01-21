@@ -701,7 +701,6 @@ def LLVM_CallOp : LLVM_MemAccessOpBase<"call",
                     [AttrSizedOperandSegments,
                      DeclareOpInterfaceMethods<FastmathFlagsInterface>,
                      DeclareOpInterfaceMethods<CallOpInterface>,
-                     DeclareOpInterfaceMethods<ArgumentAttributesOpInterface>,
                      DeclareOpInterfaceMethods<SymbolUserOpInterface>,
                      DeclareOpInterfaceMethods<BranchWeightOpInterface>]> {
   let summary = "Call to an LLVM function.";

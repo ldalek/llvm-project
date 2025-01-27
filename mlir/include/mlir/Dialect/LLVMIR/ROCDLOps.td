@@ -791,11 +791,11 @@ def ROCDL_CvtPkFp8F32Op :
 
 def ROCDL_CvtScalePkFp8F32Op :
     ROCDL_IntrOp<"cvt.scalef32.pk.fp8.f32", [], [], [Pure], 1>,
-    Arguments<(ins F32:$srcA, F32:$srcB, I32:$old, F32:$scale, I1:$wordSel)> {
-  let summary = "Convert two f32's to fp8";
+    Arguments<(ins F32:$srcA, F32:$srcB, F32:$scale, I32:$old, I1:$wordSel)> {
+  let summary = "Scale and convert two f32's to fp8";
   let description = [{
-    Convert `srcA` and `srcB` to fp8 and store into the low/high word of
-    `old`, preserving the other word.
+    Scale `srcA` and `srcB` by exponent $scale, convert to fp8, and store 
+    into the low/high word of `old`, preserving the other word.
   }];
   let assemblyFormat = [{
     attr-dict $srcA `,` $srcB `,` $scale  `->` $old `[` $wordSel `]` `:` type($res)

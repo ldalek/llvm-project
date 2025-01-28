@@ -802,11 +802,38 @@ def ROCDL_CvtPkF32FP8Op :
   }];
 }
 
+def ROCDL_CvtPkF32BF8Op :
+    ROCDL_IntrOp<"cvt.pk.f32.bf8", [], [], [Pure], 1>,
+    Arguments<(ins I32:$src, F32:$old, I1:$wordSel)> {
+    let summary = "Convert packed 2-component bf8 to packed f32";
+  let description = [{
+    Convert `src` to packed f32 and store into `old`,
+    `wordSel` controls which word of src is converted.
+  }];
+  let assemblyFormat = [{
+    attr-dict $src `[` $wordSel `]` `->` $old `:` type($res)
+  }];
+}
+
+
 
 def ROCDL_CvtScalePkF32FP8Op :
     ROCDL_IntrOp<"cvt.scalef32.pk.f32.fp8", [], [], [Pure], 1>,
     Arguments<(ins I32:$src, F32:$scale, F32:$old, I1:$wordSel)> {
     let summary = "Convert and scale packed 2-component fp8 to packed f32";
+  let description = [{
+    Convert `src` to packed f32 and scale the packed values by exponent in `scale`
+    the store into `old`, `wordSel` controls which word of src is converted.
+  }];
+  let assemblyFormat = [{
+    attr-dict $src `[` $wordSel `]` `,` $scale `->` $old `:` type($res)
+  }];
+}
+
+def ROCDL_CvtScalePkF32BF8Op :
+    ROCDL_IntrOp<"cvt.scalef32.pk.f32.bf8", [], [], [Pure], 1>,
+    Arguments<(ins I32:$src, F32:$scale, F32:$old, I1:$wordSel)> {
+    let summary = "Convert and scale packed 2-component bfp8 to packed f32";
   let description = [{
     Convert `src` to packed f32 and scale the packed values by exponent in `scale`
     the store into `old`, `wordSel` controls which word of src is converted.

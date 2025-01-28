@@ -856,6 +856,20 @@ def ROCDL_CvtSrFp8F32Op :
   }];
 }
 
+def ROCDL_CvtScaleSrFp8F32Op :
+    ROCDL_IntrOp<"cvt.scalef32.sr.fp8.f32", [], [], [Pure], 1>,
+    Arguments<(ins F32:$srcA, I32:$srcB, F32:$scale, I32:$old, I32:$byteSel)> {
+  let summary = "Scale and convert f32 to fp8, stochiastic rounding";
+  let description = [{
+    Scale `srcA` by exponent $scale and convert to fp8, adding the rounding factor from `srcB`,
+    and store into the `byteSel`th byte of `old`, preserving the others.
+  }];
+  let assemblyFormat = [{
+    attr-dict $srcA `,` $srcB `,` $scale `->` $old `[` $byteSel `]` `:` type($res)
+  }];
+}
+
+
 //===----------------------------------------------------------------------===//
 // ROCDL target attribute.
 //===----------------------------------------------------------------------===//

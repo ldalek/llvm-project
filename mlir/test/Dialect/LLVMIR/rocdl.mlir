@@ -761,6 +761,7 @@ llvm.func @rocdl_8bit_floats(%source: i32, %stoch: i32) -> i32 {
 // CHECK: rocdl.cvt.sr.bf8.f32
 // CHECK: rocdl.cvt.scalef32.sr.bf8.f32
 // CHECK: rocdl.cvt.sr.fp8.f32
+// CHECK: rocdl.cvt.scalef32.sr.fp8.f32
   %c0 = llvm.mlir.constant(0 : i32) : i32
   %c2 = llvm.mlir.constant(2 : i32) : i32
   %c3 = llvm.mlir.constant(3 : i32) : i32
@@ -775,6 +776,7 @@ llvm.func @rocdl_8bit_floats(%source: i32, %stoch: i32) -> i32 {
   %source4 = rocdl.cvt.sr.bf8.f32 %v1, %stoch -> %source3[%c2] : i32
   %source4_scaled = rocdl.cvt.scalef32.sr.bf8.f32 %v1, %stoch, %c4 -> %source3[%c2] : i32
   %source5 = rocdl.cvt.sr.fp8.f32 %v2, %stoch -> %source4[%c3] : i32
+  %source5_scaled = rocdl.cvt.scalef32.sr.fp8.f32 %v2, %stoch, %c4 -> %source4[%c3] : i32
   llvm.return %source5 : i32
 }
 

@@ -763,6 +763,34 @@ def ROCDL_CvtF32Fp8Op :
   }];
 }
 
+
+def ROCDL_CvtScaleF32Fp8Op :
+    ROCDL_IntrOp<"cvt.scalef32.f32.fp8", [], [], [Pure], 1>,
+    Arguments<(ins I32:$srcA, F32:$scale, I32:$byteSel)> {
+  let summary = "Convert and scale fp8 to f32";
+  let description = [{
+    Convert 8-bit fp8 value from the `byteSel`th bit of `srcA` to fp32
+    and scale by exponent in `scale`.
+  }];
+  let assemblyFormat = [{
+    attr-dict $srcA `[` $byteSel `]` `,` $scale `:` type($res)
+  }];
+}
+
+def ROCDL_CvtScaleF32Bf8Op :
+    ROCDL_IntrOp<"cvt.scalef32.f32.bf8", [], [], [Pure], 1>,
+    Arguments<(ins I32:$srcA, F32:$scale, I32:$byteSel)> {
+  let summary = "Convert and scale bf8 to f32";
+  let description = [{
+    Convert 8-bit bf8 value from the `byteSel`th bit of `srcA` to fp32
+    and scale by exponent in `scale`.
+  }];
+  let assemblyFormat = [{
+    attr-dict $srcA `[` $byteSel `]` `,` $scale `:` type($res)
+  }];
+}
+
+
 def ROCDL_CvtPkBf8F32Op :
     ROCDL_IntrOp<"cvt.pk.bf8.f32", [], [], [Pure], 1>,
     Arguments<(ins F32:$srcA, F32:$srcB, I32:$old, I1:$wordSel)> {

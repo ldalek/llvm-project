@@ -802,6 +802,21 @@ def ROCDL_CvtPkF32FP8Op :
   }];
 }
 
+
+def ROCDL_CvtScalePkF32FP8Op :
+    ROCDL_IntrOp<"cvt.scalef32.pk.f32.fp8", [], [], [Pure], 1>,
+    Arguments<(ins I32:$src, F32:$scale, F32:$old, I1:$wordSel)> {
+    let summary = "Convert and scale packed 2-component fp8 to packed f32";
+  let description = [{
+    Convert `src` to packed f32 and scale the packed values by exponent in `scale`
+    the store into `old`, `wordSel` controls which word of src is converted.
+  }];
+  let assemblyFormat = [{
+    attr-dict $src `[` $wordSel `]` `,` $scale `->` $old `:` type($res)
+  }];
+}
+
+
 def ROCDL_CvtScalePkFp8F32Op :
     ROCDL_IntrOp<"cvt.scalef32.pk.fp8.f32", [], [], [Pure], 1>,
     Arguments<(ins F32:$srcA, F32:$srcB, F32:$scale, I32:$old, I1:$wordSel)> {

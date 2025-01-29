@@ -237,7 +237,7 @@ else()
 endif()
 
 if (NOT "flang-rt" IN_LIST LLVM_ENABLE_RUNTIMES)
-  message(STATUS "Not building Flang-RT. For a usable Fortran toolchain, compile a standalone Flang-RT")
+  message(STATUS "Not building Flang-RT. For a usable Fortran toolchain, either add LLVM_ENABLE_RUNTIMES=flang-rt, or compile a standalone Flang-RT.")
 endif ()
 
 set(FLANG_TOOLS_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}" CACHE PATH
